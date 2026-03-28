@@ -1,39 +1,30 @@
-from utils.config_handler import prompts_conf
+﻿from utils.config_handler import prompts_conf
 from utils.path_tool import get_abs_path
 from utils.logger_handler import logger
 
 
-def load_system_prompts():
+def _load_prompt(config_key: str, loader_name: str) -> str:
+    prompt_relative_path = prompts_conf.get(config_key)
+    if not prompt_relative_path:
+        logger.error(f"[{loader_name}]missing config key: {config_key}")
+        return ""
+
+    prompt_abs_path = get_abs_path(prompt_relative_path)
     try:
-        system_prompt_path = get_abs_path(prompts_conf["main_prompt_path"])
-    except KeyError as e:
-        logger.error(f"[load_system_prompts]在yaml中没有main_prompt_path配置项")
-    
-    try:
-        return open(system_prompt_path,"r",encoding="utf-8").read()
-    except Exception as e:
-        logger.errror(f"[load_system_prompts]解析系统提示词出错，{str(e)}")
+        with open(prompt_abs_path, "r", encoding="utf-8") as f:
+            return f.read()
+    except Exception as exc:
+        logger.error(f"[{loader_name}]failed to read prompt: {exc}")
+        return ""
 
 
-def load_rag_prompts():
-    try:
-        rag_prompt_path = get_abs_path(prompts_conf["rag_summarize_prompt_path"])
-    except KeyError as e:
-        logger.error(f"[load_rag_prompts]在yaml中没有rag_summarize_prompt_path配置项")
-    
-    try:
-        return open(rag_prompt_path,"r",encoding="utf-8").read()
-    except Exception as e:
-        logger.errror(f"[load_rag_prompts]解析RAG提示词出错，{str(e)}")
+def load_system_prompts() -> str:
+    return _load_prompt("main_prompt_path", "load_system_prompts")
 
 
-def load_report_prompts():
-    try:
-        report_prompt_path = get_abs_path(prompts_conf["report_prompt_path"])
-    except KeyError as e:
-        logger.error(f"[load_report_prompts]在yaml中没有report_prompt_path配置项")
-    
-    try:
-        return open(report_prompt_path,"r",encoding="utf-8").read()
-    except Exception as e:
-        logger.errror(f"[load_report_prompts]解析report提示词出错，{str(e)}")
+def load_rag_prompts() -> str:
+    return _load_prompt("rag_summarize_prompt_path", "load_rag_prompts")
+
+
+def load_report_prompts() -> str:
+    return _load_prompt("report_prompt_path", "load_report_prompts")
